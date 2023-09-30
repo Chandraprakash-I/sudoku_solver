@@ -1,3 +1,7 @@
+
+// import {text} from  "body-parser";
+// { text } = require("body-parser");
+// import bodyParser from;
 const textArea = document.getElementById("text-input");
 const coordInput = document.getElementById("coord");
 const valInput = document.getElementById("val");
@@ -14,6 +18,7 @@ textArea.addEventListener("input", () => {
 });
 
 function fillpuzzle(data) {
+  console.log('data '+data);
   let len = data.length < 81 ? data.length : 81;
   for (let i = 0; i < len; i++) {
     let rowLetter = String.fromCharCode('A'.charCodeAt(0) + Math.floor(i / 9));
@@ -27,36 +32,63 @@ function fillpuzzle(data) {
   return;
 }
 
-async function getSolved() {
+async function getSolved(event) {
+  event.preventDefault(); 
+  console.log('hai bai');
   const stuff = {"puzzle": textArea.value}
-  const data = await fetch("/api/solve", {
-    method: "POST",
-    headers: {
-      "Accept": "application/json",
-      "Content-type": "application/json"
-    },
-    body: JSON.stringify(stuff)
-  })
-  const parsed = await data.json();
-  if (parsed.error) {
-    errorMsg.innerHTML = `<code>${JSON.stringify(parsed, null, 2)}</code>`;
-    return
+  console.log(textArea.value);
+  
+  try {
+    const response = await fetch("/api/solve", {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-type": "application/json"
+      },
+      body: JSON.stringify(stuff)
+    });
+    
+    if (!response.ok) {
+      throw new Error('input string should be 81 characters long and should not contain any characters other than digits[1-9] and .');
+    }
+    
+    const data = await response.json();
+    fillpuzzle(data);
+    // Handle data here
+  } catch (error) {
+    console.error('Error:', error.message);
+    errorMsg.innerHTML = `<code>${JSON.stringify(error.message, null, 2)}</code>`;
   }
-  fillpuzzle(parsed.solution)
 }
 
-async function getChecked() {
+
+
+async function getChecked(event) {
+  event.preventDefault(); 
   const stuff = {"puzzle": textArea.value, "coordinate": coordInput.value, "value": valInput.value}
-    const data = await fetch("/api/check", {
-    method: "POST",
-    headers: {
-      "Accept": "application/json",
-      "Content-type": "application/json"
-    },
-    body: JSON.stringify(stuff)
-  })
-  const parsed = await data.json();
-  errorMsg.innerHTML = `<code>${JSON.stringify(parsed, null, 2)}</code>`;
+    try{
+      const data = await fetch("/api/check", {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-type": "application/json"
+        },
+        body: JSON.stringify(stuff)
+
+      });
+      if (data.ok) {
+        
+      const res = await data.json();
+       if(res){
+        errorMsg.innerHTML = `<code>${JSON.stringify(res, null, 2)}</code>`;
+       }
+      }
+      
+    }catch(error){
+      errorMsg.innerHTML = `<code>${JSON.stringify(error.message, null, 2)}</code>`;
+    }
+ 
+  
 }
 
 
